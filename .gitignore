@@ -27,7 +27,7 @@ lerna-debug.log*
 # Backend - Python
 bin/
 pyvenv.cfg
-# **/__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
