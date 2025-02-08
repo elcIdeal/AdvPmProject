@@ -33,11 +33,10 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <Auth0Provider
-      domain="your-auth0-domain.auth0.com"
-      clientId="your-client-id"
+      domain={import.meta.env.VITE_AUTH0_DOMAIN}
+      clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
       authorizationParams={{
-        redirect_uri: window.location.origin,
-        audience: 'https://api.spendwise.com',
+        redirect_uri: window.location.origin
       }}
     >
       <ThemeProvider theme={theme}>
@@ -46,11 +45,13 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
-              path="/"
+              path="/*"
               element={
                 <PrivateRoute>
                   <Layout>
-                    <Dashboard />
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                    </Routes>
                   </Layout>
                 </PrivateRoute>
               }
