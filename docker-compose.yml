@@ -6,12 +6,17 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - REACT_APP_AUTH0_DOMAIN=${REACT_APP_AUTH0_DOMAIN}
+      - REACT_APP_AUTH0_CLIENT_ID=${REACT_APP_AUTH0_CLIENT_ID}
+    env_file:
+      - .env
     depends_on:
       - backend
 
@@ -20,14 +25,20 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
       - ./backend:/app
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/spendwise
-      - AUTH0_DOMAIN=your-auth0-domain
-      - AUTH0_API_AUDIENCE=your-auth0-audience
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_USER=${MONGODB_USER}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_API_AUDIENCE=${AUTH0_API_AUDIENCE}
+      - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+      - AUTH0_CLIENT_SECRET=${AUTH0_CLIENT_SECRET}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=${BACKEND_PORT}
+      - HOST=${BACKEND_HOST}
     env_file:
       - .env
     depends_on:
@@ -37,6 +48,9 @@ services:
     image: mongo:latest
     ports:
       - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
     volumes:
       - mongodb_data:/data/db
 
