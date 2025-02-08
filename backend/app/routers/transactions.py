@@ -22,16 +22,19 @@ class TransactionResponse(BaseModel):
     transactions: List[Transaction]
     message: str
 
+@router.get("/test")
+async def test_route():
+    return {"message": "Test route"}
+
 @router.post("/upload")
 async def upload_statement(
     request: Request,
-    file: UploadFile = File(...),
-    current_user = Depends(get_current_user)
+    file: UploadFile = File(...)
 ):
     try:
         # Configure Gemini API
         genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel('gemini-pro-vision')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Read and process PDF file
         contents = await file.read()
@@ -82,9 +85,11 @@ async def get_transactions(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     current_user = Depends(get_current_user)
+
 ):
     try:
         query = {"user_id": current_user['sub']}
+
         
         if start_date or end_date:
             query['date'] = {}
