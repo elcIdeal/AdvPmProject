@@ -27,7 +27,9 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/spendwise
       - AUTH0_DOMAIN=your-auth0-domain
       - AUTH0_API_AUDIENCE=your-auth0-audience
-      - GEMINI_API_KEY=your-gemini-api-key
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file:
+      - .env
     depends_on:
       - mongodb
 
