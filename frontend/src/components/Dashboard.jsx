@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
@@ -34,30 +35,29 @@ function Dashboard() {
   const [insights, setInsights] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const fetchData = async () => {
-    try {
-      const token = await getAccessTokenSilently();
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const [summaryResponse, insightsResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/transactions/summary', { headers }),
-        axios.get('http://localhost:8000/api/analysis/insights', { headers }),
-      ]);
-
-      setSummary(summaryResponse.data);
-      setInsights(insightsResponse.data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch data. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-  }, []);
+    const initializeData = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        const headers = { Authorization: `Bearer ${token}` };
 
+        const [summaryResponse, insightsResponse] = await Promise.all([
+          axios.get('http://localhost:8000/api/transactions/summary', { headers }),
+          axios.get('http://localhost:8000/api/analysis/insights', { headers }),
+        ]);
+
+        setSummary(summaryResponse.data);
+        setInsights(insightsResponse.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeData();
+  }, [getAccessTokenSilently]);
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;

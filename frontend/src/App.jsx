@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -36,7 +37,9 @@ function App() {
       domain={import.meta.env.VITE_AUTH0_DOMAIN}
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
       authorizationParams={{
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin,
+        audience: `https://${import.meta.env.VITE_AUTH0_DOMAIN}/api/v2/`,
+        scope: 'openid profile email'
       }}
     >
       <ThemeProvider theme={theme}>
