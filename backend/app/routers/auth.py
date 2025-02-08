@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorClient
 from ..config import Settings
 from pydantic import BaseModel
+from ..dependencies import get_current_user
 
 router = APIRouter()
 settings = Settings()
