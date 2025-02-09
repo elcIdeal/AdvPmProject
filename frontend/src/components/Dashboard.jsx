@@ -39,6 +39,10 @@ function Dashboard() {
     const initializeData = async () => {
       try {
         const token = await getAccessTokenSilently();
+        if (!token) {
+          throw new Error('Failed to get authentication token');
+        }
+
         const headers = { Authorization: `Bearer ${token}` };
 
         const [summaryResponse, insightsResponse] = await Promise.all([
@@ -50,7 +54,8 @@ function Dashboard() {
         setInsights(insightsResponse.data);
         setError(null);
       } catch (err) {
-        setError('Failed to fetch data. Please try again later.');
+        console.error('Dashboard initialization error:', err);
+        setError(err.response?.data?.detail || 'Failed to fetch data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -67,16 +72,33 @@ function Dashboard() {
 
     try {
       setLoading(true);
+      setError(null);
+      
       const token = await getAccessTokenSilently();
+      if (!token) {
+        throw new Error('Failed to get authentication token');
+      }
+
       await axios.post('http://localhost:8000/api/transactions/upload', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-      fetchData();
+
+      // Refresh dashboard data after successful upload
+      const headers = { Authorization: `Bearer ${token}` };
+      const [summaryResponse, insightsResponse] = await Promise.all([
+        axios.get('http://localhost:8000/api/transactions/summary', { headers }),
+        axios.get('http://localhost:8000/api/analysis/insights', { headers }),
+      ]);
+
+      setSummary(summaryResponse.data);
+      setInsights(insightsResponse.data);
     } catch (err) {
-      setError('Failed to upload file. Please try again.');
+      console.error('Upload error:', err);
+      setError(err.response?.data?.detail || 'Failed to upload file. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -111,7 +133,7 @@ function Dashboard() {
           <input
             type="file"
             hidden
-            accept=".pdf"
+            accept=".csv"
             onChange={handleFileUpload}
           />
         </Button>

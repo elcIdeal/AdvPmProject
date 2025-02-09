@@ -29,7 +29,7 @@ class TransactionResponse(BaseModel):
 async def upload_statement(
     request: Request,
     file: UploadFile = File(...),
-    # current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
     try:
         # Configure Gemini API
@@ -88,14 +88,21 @@ async def upload_statement(
         transactions_data = json.loads(text_response.replace("```json", "").replace("```", "").strip())
         # print(transactions_data)
 
-        # Store transactions in MongoDB
-        # transactions_to_insert = []
-        # for transaction in transactions_data:
-        #     transaction['user_id'] = current_user['sub']
-        #     transaction['created_at'] = datetime.utcnow()
-        #     transactions_to_insert.append(transaction)
+        # Store transactions in MongoDB with better error handling
+        transactions_to_insert = []
+        for transaction in transactions_data:
+            transaction['user_id'] = current_user['sub']
+            transaction['created_at'] = datetime.utcnow()
+            transactions_to_insert.append(transaction)
         
-        # await request.app.mongodb['transactions'].insert_many(transactions_to_insert)
+        try:
+            await request.app.mongodb['transactions'].insert_many(transactions_to_insert)
+        except Exception as db_error:
+            print(f"Database error: {str(db_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to store transactions in database"
+            )
         
         return TransactionResponse(
             transactions=transactions_data,
@@ -103,7 +110,7 @@ async def upload_statement(
         )
     
     except Exception as e:
-        print(f"Exception : {str(e)}")
+        print(f"Exception: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

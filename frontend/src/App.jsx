@@ -41,6 +41,8 @@ function App() {
         audience: `https://${import.meta.env.VITE_AUTH0_DOMAIN}/api/v2/`,
         scope: 'openid profile email'
       }}
+      cacheLocation="localstorage"
+      useRefreshTokens={true}
     >
       <ThemeProvider theme={theme}>
         <CssBaseline />
