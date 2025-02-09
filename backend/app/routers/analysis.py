@@ -55,7 +55,7 @@ async def get_insights(
 
         # Generate prompt for analysis
         prompt = f"""
-        You are a financial advisor analyzing a user's spending and financial behaviors. Review the following transactions and provide insights in the format below:
+        You are a financial advisor analyzing a user's spending and financial behaviors. Review the following transactions and provide insights in the following format:
         1. Unnecessary Spending:
         - Identify recurring subscriptions or services that are rarely or never used.
         - Highlight high-cost categories where the user may be overspending.
@@ -75,17 +75,29 @@ async def get_insights(
         - Detect any unusual or outlier spending patterns (e.g., large, one-time purchases or unusual increases in a specific category).
         - Suggest areas where the user might save based on anomalies in their spending behavior.
 
-        Please return the analysis in the following JSON format:
+        Please return the analysis in the following JSON format. Make sure each field follows the exact structure:
         {{
-            "unnecessary_spending": [list of unnecessary or flagged transactions],
-            "recommendations": [list of recommendations to reduce spending],
+            "unnecessary_spending": [
+                {{
+                    "description": "Description of the unnecessary spending",
+                    "amount": "Amount spent",
+                    "suggestion": "Suggestion to reduce this spending"
+                }}
+            ],
+            "recommendations": ["Recommendation 1", "Recommendation 2"],
             "cash_flow_analysis": {{
-                "monthly_income": total_income,
-                "total_spent": total_spent,
-                "savings_potential": savings_potential,
-                "cash_flow_trends": [trend analysis, forecasts]
+                "monthly_income": "Total monthly income",
+                "total_spent": "Total amount spent",
+                "savings_potential": "Potential savings amount",
+                "cash_flow_trends": ["Trend 1", "Trend 2"]
             }},
-            "anomalies": [list of detected anomalies],
+            "anomalies": [
+                {{
+                    "description": "Description of the anomaly",
+                    "amount": "Amount involved",
+                    "suggestion": "Suggestion to address this anomaly"
+                }}
+            ],
             "message": "Analysis summary"
         }}
 
@@ -95,16 +107,32 @@ async def get_insights(
         # Get insights from Gemini
         response = model.generate_content(prompt)
         text_response = response.text
-        insights =  json.loads(text_response.replace("```json", "").replace("```", "").strip())
-        print(insights)
         
-        return InsightResponse(
-            unnecessary_spending=insights.get('unnecessary_spending', []),
-            recommendations=insights.get('recommendations', []),
-            cash_flow_analysis=insights.get('cash_flow_analysis', {}),
-            anomalies=insights.get('anomalies', []),
-            message="Analysis completed successfully"
-        )
+        # Clean and parse the JSON response
+        cleaned_response = text_response.replace("```json", "").replace("```", "").strip()
+        insights = json.loads(cleaned_response)
+        
+        # Validate and ensure proper data structure
+        validated_insights = {
+            "unnecessary_spending": [
+                item if isinstance(item, dict) else {"description": str(item), "amount": "N/A", "suggestion": "N/A"}
+                for item in insights.get('unnecessary_spending', [])
+            ],
+            "recommendations": insights.get('recommendations', []),
+            "cash_flow_analysis": insights.get('cash_flow_analysis', {
+                "monthly_income": "0",
+                "total_spent": "0",
+                "savings_potential": "0",
+                "cash_flow_trends": []
+            }),
+            "anomalies": [
+                item if isinstance(item, dict) else {"description": str(item), "amount": "N/A", "suggestion": "N/A"}
+                for item in insights.get('anomalies', [])
+            ],
+            "message": insights.get('message', 'Analysis completed successfully')
+        }
+        
+        return InsightResponse(**validated_insights)
     
     except Exception as e:
         raise HTTPException(

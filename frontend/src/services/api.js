@@ -42,3 +42,20 @@ export const uploadTransactions = (formData) => {
     }
   });
 };
+
+// New API endpoints for credit card recommendations and scraping
+export const fetchCreditCardRecommendations = () => {
+  return api.get('/api/recommender/suggest-credit-cards');
+};
+
+export const fetchCreditCardInfo = () => {
+  return api.get('/api/scraper/credit-cards-info');
+};
+
+// Transaction listing endpoint
+export const fetchTransactions = (startDate, endDate) => {
+  const params = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  return api.get('/api/transactions/list', { params });
+};

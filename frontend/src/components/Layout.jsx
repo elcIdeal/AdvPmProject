@@ -1,6 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -15,20 +16,28 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Divider,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   UploadFile as UploadIcon,
   Assessment as AssessmentIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
+const minDrawerWidth = 65;
 
 function Layout({ children }) {
   const { user, logout } = useAuth0();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -46,28 +55,56 @@ function Layout({ children }) {
     logout({ returnTo: window.location.origin });
   };
 
+  const handleNavigation = (path) => {
+    navigate(path);
+    setMobileOpen(false);
+  };
+
   const drawer = (
     <div>
-      <Toolbar />
+      <Toolbar sx={{ display: 'flex', justifyContent: 'flex-end', minHeight: 64 }}>
+        <IconButton onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}>
+          {isDrawerCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
+      </Toolbar>
+      <Divider />
       <List>
-        <ListItem button>
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <UploadIcon />
-          </ListItemIcon>
-          <ListItemText primary="Upload Statement" />
-        </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <AssessmentIcon />
-          </ListItemIcon>
-          <ListItemText primary="Analysis" />
-        </ListItem>
+        <Tooltip title={isDrawerCollapsed ? 'Dashboard' : ''} placement="right">
+          <ListItem 
+            button 
+            onClick={() => handleNavigation('/')} 
+            selected={location.pathname === '/'}
+          >
+            <ListItemIcon>
+              <DashboardIcon />
+            </ListItemIcon>
+            {!isDrawerCollapsed && <ListItemText primary="Dashboard" />}
+          </ListItem>
+        </Tooltip>
+        <Tooltip title={isDrawerCollapsed ? 'Upload Statement' : ''} placement="right">
+          <ListItem 
+            button 
+            onClick={() => handleNavigation('/upload')} 
+            selected={location.pathname === '/upload'}
+          >
+            <ListItemIcon>
+              <UploadIcon />
+            </ListItemIcon>
+            {!isDrawerCollapsed && <ListItemText primary="Upload Statement" />}
+          </ListItem>
+        </Tooltip>
+        <Tooltip title={isDrawerCollapsed ? 'Analysis' : ''} placement="right">
+          <ListItem 
+            button 
+            onClick={() => handleNavigation('/analysis')} 
+            selected={location.pathname === '/analysis'}
+          >
+            <ListItemIcon>
+              <AssessmentIcon />
+            </ListItemIcon>
+            {!isDrawerCollapsed && <ListItemText primary="Analysis" />}
+          </ListItem>
+        </Tooltip>
       </List>
     </div>
   );
@@ -77,8 +114,9 @@ function Layout({ children }) {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
+          width: { sm: `calc(100% - ${isDrawerCollapsed ? minDrawerWidth : drawerWidth}px)` },
+          ml: { sm: `${isDrawerCollapsed ? minDrawerWidth : drawerWidth}px` },
+          transition: 'width 0.2s, margin 0.2s'
         }}
       >
         <Toolbar>
@@ -111,7 +149,11 @@ function Layout({ children }) {
       </AppBar>
       <Box
         component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        sx={{ 
+          width: { sm: isDrawerCollapsed ? minDrawerWidth : drawerWidth }, 
+          flexShrink: { sm: 0 },
+          transition: 'width 0.2s'
+        }}
       >
         <Drawer
           variant="temporary"
@@ -122,7 +164,8 @@ function Layout({ children }) {
             display: { xs: 'block', sm: 'none' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: isDrawerCollapsed ? minDrawerWidth : drawerWidth,
+              transition: 'width 0.2s'
             },
           }}
         >
@@ -134,7 +177,8 @@ function Layout({ children }) {
             display: { xs: 'none', sm: 'block' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: isDrawerCollapsed ? minDrawerWidth : drawerWidth,
+              transition: 'width 0.2s'
             },
           }}
           open
@@ -147,8 +191,9 @@ function Layout({ children }) {
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${isDrawerCollapsed ? minDrawerWidth : drawerWidth}px)` },
           mt: 8,
+          transition: 'width 0.2s'
         }}
       >
         {children}

@@ -8,7 +8,7 @@ import {
   Typography,
   Button,
   CircularProgress,
-  Alert,
+  Alert
 } from '@mui/material';
 import {
   BarChart,
@@ -23,7 +23,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { UploadFile as UploadIcon } from '@mui/icons-material';
-import { fetchSummary, fetchInsights, uploadTransactions } from '../services/api';
+import { fetchSummary, uploadTransactions } from '../services/api';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -31,27 +31,18 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
-  const [insights, setInsights] = useState(null);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        const [summaryResponse, insightsResponse] = await Promise.all([
-          fetchSummary(),
-          fetchInsights()
-        ]);
-
+        const summaryResponse = await fetchSummary();
         setSummary(summaryResponse.data);
-        setInsights(insightsResponse.data);
         setError(null);
-
       } catch (err) {
         console.error('Dashboard initialization error:', err);
         setError(err.response?.data?.detail || 'Failed to fetch data. Please try again later.');
-
       } finally {
         setLoading(false);
-
       }
     };
 
@@ -71,17 +62,35 @@ function Dashboard() {
       
       await uploadTransactions(formData);
 
-      // Refresh dashboard data after successful upload
-      const [summaryResponse, insightsResponse] = await Promise.all([
-        fetchSummary(),
-        fetchInsights()
-      ]);
-
+      const summaryResponse = await fetchSummary();
       setSummary(summaryResponse.data);
-      setInsights(insightsResponse.data);
     } catch (err) {
       console.error('Upload error:', err);
       setError(err.response?.data?.detail || 'Failed to upload file. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSampleDataUpload = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/sample_transactions.csv');
+      const blob = await response.blob();
+      const file = new File([blob], 'sample_transactions.csv', { type: 'text/csv' });
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      await uploadTransactions(formData);
+
+      const summaryResponse = await fetchSummary();
+      setSummary(summaryResponse.data);
+    } catch (err) {
+      console.error('Sample data upload error:', err);
+      setError(err.response?.data?.detail || 'Failed to load sample data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -95,126 +104,93 @@ function Dashboard() {
     );
   }
 
-  if (!summary?.categories?.length && !loading) {
-    return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        minHeight="60vh"
-        gap={2}
-      >
-        <Typography variant="h6" gutterBottom>
-          No transactions found. Upload your first statement to get started!
-        </Typography>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<UploadIcon />}
-        >
-          Upload Statement
-          <input
-            type="file"
-            hidden
-            accept=".csv"
-            onChange={handleFileUpload}
-          />
-        </Button>
-      </Box>
-    );
-  }
-
   return (
-    <Box>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      <Grid container spacing={3}>
-        {/* Monthly Spending Trend */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Monthly Spending Trend
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={summary?.monthly || []}>
-                <XAxis dataKey="_id" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="total" fill="#8884d8" name="Total Spending" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Category Breakdown */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Spending by Category
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={summary?.categories || []}
-                  dataKey="total"
-                  nameKey="_id"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label
-                >
-                  {summary?.categories?.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Insights and Recommendations */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              AI Insights
-            </Typography>
-            {insights?.recommendations?.map((recommendation, index) => (
-              <Typography key={index} paragraph>
-                • {recommendation}
-              </Typography>
-            ))}
-          </Paper>
-        </Grid>
-
-        {/* Upload New Statement */}
-        <Grid item xs={12}>
-          <Box display="flex" justifyContent="center">
+    <Box sx={{ width: '100%' }}>
+      {!summary?.categories?.length ? (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="300px"
+        >
+          <Typography variant="h6" gutterBottom>
+            No transaction data available
+          </Typography>
+          <Box display="flex" flexDirection="column" gap={2} alignItems="center">
             <Button
               variant="contained"
               component="label"
               startIcon={<UploadIcon />}
             >
-              Upload New Statement
+              Upload Statement
               <input
                 type="file"
                 hidden
-                accept=".pdf"
+                accept=".csv"
                 onChange={handleFileUpload}
               />
             </Button>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, mb: 1 }}>
+              or
+            </Typography>
+            <Button
+              variant="outlined"
+              onClick={handleSampleDataUpload}
+            >
+              Try with Sample Data
+            </Button>
           </Box>
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {/* Monthly Spending Bar Chart */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: 400 }}>
+              <Typography variant="h6" gutterBottom>
+                Monthly Spending
+              </Typography>
+              <ResponsiveContainer width="100%" height="90%">
+                <BarChart data={summary.monthly}>
+                  <XAxis dataKey="_id" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="total" fill="#8884d8" name="Amount" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
+
+          {/* Category-wise Spending Pie Chart */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: 400 }}>
+              <Typography variant="h6" gutterBottom>
+                Spending by Category
+              </Typography>
+              <ResponsiveContainer width="100%" height="90%">
+                <PieChart>
+                  <Pie
+                    data={summary.categories}
+                    dataKey="total"
+                    nameKey="_id"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {summary.categories.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
     </Box>
   );
 }

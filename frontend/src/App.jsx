@@ -8,6 +8,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Layout from './components/Layout';
+import Upload from './components/Upload';
+import Analysis from './components/Analysis';
 import { initializeAuth } from './services/api';
 
 const theme = createTheme({
@@ -52,6 +54,8 @@ function App() {
                 <Layout>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/upload" element={<Upload />} />
+                    <Route path="/analysis" element={<Analysis />} />
                   </Routes>
                 </Layout>
               </PrivateRoute>
