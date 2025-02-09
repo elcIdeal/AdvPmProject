@@ -1,7 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import axios from 'axios';
 import {
   Box,
   Grid,
@@ -24,45 +23,41 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { UploadFile as UploadIcon } from '@mui/icons-material';
+import { fetchSummary, fetchInsights, uploadTransactions } from '../services/api';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 function Dashboard() {
-  const { getAccessTokenSilently } = useAuth0();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
   const [insights, setInsights] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        const token = await getAccessTokenSilently();
-        if (!token) {
-          throw new Error('Failed to get authentication token');
-        }
-
-        const headers = { Authorization: `Bearer ${token}` };
-
         const [summaryResponse, insightsResponse] = await Promise.all([
-          axios.get('http://localhost:8000/api/transactions/summary', { headers }),
-          axios.get('http://localhost:8000/api/analysis/insights', { headers }),
+          fetchSummary(),
+          fetchInsights()
         ]);
 
         setSummary(summaryResponse.data);
         setInsights(insightsResponse.data);
         setError(null);
+
       } catch (err) {
         console.error('Dashboard initialization error:', err);
         setError(err.response?.data?.detail || 'Failed to fetch data. Please try again later.');
+
       } finally {
         setLoading(false);
+
       }
     };
 
     initializeData();
-  }, [getAccessTokenSilently]);
+  }, []);
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -74,23 +69,12 @@ function Dashboard() {
       setLoading(true);
       setError(null);
       
-      const token = await getAccessTokenSilently();
-      if (!token) {
-        throw new Error('Failed to get authentication token');
-      }
-
-      await axios.post('http://localhost:8000/api/transactions/upload', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await uploadTransactions(formData);
 
       // Refresh dashboard data after successful upload
-      const headers = { Authorization: `Bearer ${token}` };
       const [summaryResponse, insightsResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/transactions/summary', { headers }),
-        axios.get('http://localhost:8000/api/analysis/insights', { headers }),
+        fetchSummary(),
+        fetchInsights()
       ]);
 
       setSummary(summaryResponse.data);
