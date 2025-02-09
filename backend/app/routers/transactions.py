@@ -7,6 +7,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 import google.generativeai as genai
 import json
+import csv
+from io import StringIO
+import pandas as pd
 
 router = APIRouter()
 settings = Settings()
@@ -22,42 +25,67 @@ class TransactionResponse(BaseModel):
     transactions: List[Transaction]
     message: str
 
-@router.get("/test")
-async def test_route():
-    return {"message": "Test route"}
 
 @router.post("/upload")
 async def upload_statement(
     request: Request,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    # current_user = Depends(get_current_user)
 ):
     try:
         # Configure Gemini API
         genai.configure(api_key=settings.gemini_api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Read and process PDF file
+        # Read and parse CSV file
         contents = await file.read()
+        df = pd.read_csv(StringIO(contents.decode("utf-8")))
         
-        # Convert PDF to text using OCR (implementation needed)
-        # This is a placeholder for PDF processing logic
-        statement_text = "Processed statement text"
+        # Convert CSV data to formatted text for Gemini
+        transactions_list = []
+        for _, row in df.iterrows():
+            transaction_str = f"Date: {row['Trans. Date']}, Description: {row['Description']}, Amount: {row['Amount']}"
+            transactions_list.append(transaction_str)
         
+        statement_text = "\n".join(transactions_list)
+
         # Generate prompt for Gemini
-        prompt = f"""Analyze this bank statement and extract all transactions.
-        For each transaction, provide:
-        - name: Transaction name/description
-        - category: Category (e.g., Food, Transport, Utilities)
-        - date: Date in YYYY-MM-DD format
-        - amount: Transaction amount
-        - type: 'Debit' or 'Credit'
-        
-        Return the data as a JSON array.
+        prompt = f"""Analyze the following bank statement transactions from the statement text and extract relevant financial details. 
+        For each transaction, return the following fields in JSON format:
+
+        1.⁠ ⁠Transaction Date: Extract the date when the transaction was made.
+        2.⁠ ⁠Category: Determine the category of the transaction based on its description. 
+        Use the following categories:
+        - Groceries (e.g., FOOD LION, COSTCO, WALMART)
+        - Dining (e.g., Restaurants, Cafes, Fast Food, Starbucks)
+        - Shopping (e.g., Amazon, Online stores, Retail purchases)
+        - Health & Wellness (e.g., Pharmacies, Herbal stores, Clinics)
+        - Entertainment (e.g., Movies, Games, Subscriptions)
+        - Travel & Transport (e.g., Uber, Gas stations, Airlines)
+        - Bills & Utilities (e.g., Electricity, Internet, Water bills)
+        - Income (e.g., Salary, Cashback, Statement Credit)
+        - Others (If the description does not fit any category)
+
+        3.⁠ ⁠Amount: The exact transaction amount.
+        4.⁠ ⁠Type: Determine if the transaction is a Credit (positive amount) or Debit (negative amount).
+
+        Return the output as a JSON array where each object follows this structure:
+
+        [
+            {
+                "transaction_date": "YYYY-MM-DD",
+                "category": "Category Name",
+                "amount": XX.XX,
+                "type": "Credit/Debit"
+            }
+        ]
         Statement text: {statement_text}"""
         
         # Get response from Gemini
         response = model.generate_content(prompt)
-        transactions_data = json.loads(response.text)
+        text_response = response.text
+        json_data = json.loads(text_response.replace("```json", "").replace("```", "").strip())
+        
         
         # Store transactions in MongoDB
         transactions_to_insert = []
@@ -74,6 +102,7 @@ async def upload_statement(
         )
     
     except Exception as e:
+        print(f"Exception : {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
