@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from .config import Settings
-from .routers import transactions, analysis, auth, scraper
+from .routers import transactions, analysis, auth, scraper, recommender 
 
 app = FastAPI(title="SpendWise API")
 settings = Settings()
@@ -42,6 +42,12 @@ app.include_router(
     scraper.router,
     prefix="/api/scraper",
     tags=["scraper"]
+)
+
+app.include_router(
+    recommender.router,
+    prefix="/api/recommender",
+    tags=["recommender"]
 )
 
 @app.get("/api/health")
