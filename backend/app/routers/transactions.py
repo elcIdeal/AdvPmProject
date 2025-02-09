@@ -10,6 +10,7 @@ import json
 import csv
 from io import StringIO
 import pandas as pd
+import hashlib
 
 router = APIRouter()
 settings = Settings()
@@ -39,7 +40,6 @@ async def upload_statement(
         # Read and parse CSV file
         contents = await file.read()
         df = pd.read_csv(StringIO(contents.decode("utf-8")))
-        # print(df.head())
         
         # Convert CSV data to formatted text for Gemini
         transactions_list = []
@@ -84,19 +84,41 @@ async def upload_statement(
         # Get response from Gemini
         response = model.generate_content(prompt)
         text_response = response.text
-        # print(text_response)
         transactions_data = json.loads(text_response.replace("```json", "").replace("```", "").strip())
-        # print(transactions_data)
 
-        # Store transactions in MongoDB with better error handling
+        # Generate hash and prepare transactions for insertion
         transactions_to_insert = []
         for transaction in transactions_data:
+            # Generate hash based on transaction details
+            hash_input = f"{transaction['transaction_date']}{transaction['amount']}{transaction['type']}"
+            transaction_hash = hashlib.md5(hash_input.encode()).hexdigest()
+            
+            # Add hash and user_id to transaction
+            transaction['hash'] = transaction_hash
             transaction['user_id'] = current_user['sub']
             transaction['created_at'] = datetime.utcnow()
             transactions_to_insert.append(transaction)
         
+        # Check for duplicates
+        unique_transactions = []
+        for transaction in transactions_to_insert:
+            existing_transaction = await request.app.mongodb['transactions'].find_one({
+                'hash': transaction['hash'],
+                'user_id': current_user['sub']
+            })
+            
+            if not existing_transaction:
+                unique_transactions.append(transaction)
+        
+        if not unique_transactions:
+            return TransactionResponse(
+                transactions=[],
+                message="All transactions are duplicates"
+            )
+        
         try:
-            await request.app.mongodb['transactions'].insert_many(transactions_to_insert)
+            if unique_transactions:
+                await request.app.mongodb['transactions'].insert_many(unique_transactions)
         except Exception as db_error:
             print(f"Database error: {str(db_error)}")
             raise HTTPException(
@@ -105,8 +127,8 @@ async def upload_statement(
             )
         
         return TransactionResponse(
-            transactions=transactions_data,
-            message="Statement processed successfully"
+            transactions=unique_transactions,
+            message=f"Successfully processed {len(unique_transactions)} new transactions. {len(transactions_to_insert) - len(unique_transactions)} duplicates were skipped."
         )
     
     except Exception as e:
