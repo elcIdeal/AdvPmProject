@@ -91,10 +91,7 @@ async def get_insights(
 
         Transactions: {transactions}
         """
-
         
-
-
         # Get insights from Gemini
         response = model.generate_content(prompt)
         text_response = response.text
@@ -114,75 +111,7 @@ async def get_insights(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-# @router.get("/insights")
-# async def get_insights(
-#     request: Request,
-#     start_date: Optional[str] = None,
-#     end_date: Optional[str] = None,
-#     current_user = Depends(get_current_user)
-# ):
-#     try:
-#         # Fetch user's transactions
-#         query = {"user_id": current_user['sub']}
-#         if start_date or end_date:
-#             query['date'] = {}
-#             if start_date:
-#                 query['date']['$gte'] = start_date
-#             if end_date:
-#                 query['date']['$lte'] = end_date
-        
-#         transactions = await request.app.mongodb['transactions'].find(query).to_list(None)
-        
-#         if not transactions:
-#             return InsightResponse(
-#                 unnecessary_spending=[],
-#                 recommendations=[],
-#                 cash_flow_analysis={},
-#                 anomalies=[],
-#                 message="No transactions found for analysis"
-#             )
-        
-#         # Configure Gemini API
-#         genai.configure(api_key=settings.gemini_api_key)
-#         model = genai.GenerativeModel('gemini-pro')
-        
-#         # Generate prompt for analysis
-#         prompt = f"""Analyze these transactions and provide insights in the following format:
-#         1. Unnecessary Spending:
-#            - Identify recurring subscriptions and flag those that haven't been used lately
-#            - Spot high-cost categories and suggest alternatives
-#         2. Recommendations:
-#            - Specific suggestions to cut costs
-#            - Budget adjustments
-#            - Alternative service providers
-#         3. Cash Flow Analysis:
-#            - Monthly income vs. spending
-#            - Trends and forecasts
-#         4. Anomalies:
-#            - Unusual spending patterns
-#            - Potential areas for savings
-        
-#         Return the analysis as a JSON object with these sections.
-#         Transactions: {json.dumps(transactions)}"""
-        
-#         # Get insights from Gemini
-#         response = model.generate_content(prompt)
-#         insights = json.loads(response.text)
-        
-#         return InsightResponse(
-#             unnecessary_spending=insights.get('unnecessary_spending', []),
-#             recommendations=insights.get('recommendations', []),
-#             cash_flow_analysis=insights.get('cash_flow_analysis', {}),
-#             anomalies=insights.get('anomalies', []),
-#             message="Analysis completed successfully"
-#         )
     
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail=str(e)
-#         )
-
 @router.get("/summary")
 async def get_summary(
     request: Request,
