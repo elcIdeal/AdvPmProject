@@ -15,9 +15,8 @@ router = APIRouter()
 settings = Settings()
 
 class Transaction(BaseModel):
-    name: str
+    transaction_date: str
     category: str
-    date: str
     amount: float
     type: str
 
