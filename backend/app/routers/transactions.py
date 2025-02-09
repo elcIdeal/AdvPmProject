@@ -40,6 +40,7 @@ async def upload_statement(
         # Read and parse CSV file
         contents = await file.read()
         df = pd.read_csv(StringIO(contents.decode("utf-8")))
+        # print(df.head())
         
         # Convert CSV data to formatted text for Gemini
         transactions_list = []
@@ -72,29 +73,30 @@ async def upload_statement(
         Return the output as a JSON array where each object follows this structure:
 
         [
-            {
+            {{
                 "transaction_date": "YYYY-MM-DD",
                 "category": "Category Name",
                 "amount": XX.XX,
                 "type": "Credit/Debit"
-            }
+            }}
         ]
         Statement text: {statement_text}"""
         
         # Get response from Gemini
         response = model.generate_content(prompt)
         text_response = response.text
-        json_data = json.loads(text_response.replace("```json", "").replace("```", "").strip())
-        
-        
+        # print(text_response)
+        transactions_data = json.loads(text_response.replace("```json", "").replace("```", "").strip())
+        # print(transactions_data)
+
         # Store transactions in MongoDB
-        transactions_to_insert = []
-        for transaction in transactions_data:
-            transaction['user_id'] = current_user['sub']
-            transaction['created_at'] = datetime.utcnow()
-            transactions_to_insert.append(transaction)
+        # transactions_to_insert = []
+        # for transaction in transactions_data:
+        #     transaction['user_id'] = current_user['sub']
+        #     transaction['created_at'] = datetime.utcnow()
+        #     transactions_to_insert.append(transaction)
         
-        await request.app.mongodb['transactions'].insert_many(transactions_to_insert)
+        # await request.app.mongodb['transactions'].insert_many(transactions_to_insert)
         
         return TransactionResponse(
             transactions=transactions_data,
