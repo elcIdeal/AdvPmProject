@@ -4,13 +4,13 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from .config import Settings
 from .routers import transactions, analysis, auth, scraper, recommender 
 
-app = FastAPI(title="SpendWise API")
+app = FastAPI(title="Expin API")
 settings = Settings()
 
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3012"],
+    allow_origins=["http://localhost:3012", "https://expin.us"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -8,7 +8,12 @@ import {
   Typography,
   Button,
   CircularProgress,
-  Alert
+  TableContainer,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import {
   BarChart,
@@ -23,7 +28,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { UploadFile as UploadIcon } from '@mui/icons-material';
-import { fetchSummary, uploadTransactions } from '../services/api';
+import { fetchSummary, uploadTransactions, fetchChallenges } from '../services/api';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -31,12 +36,17 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [challenges, setChallenges] = useState([]);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        const summaryResponse = await fetchSummary();
+        const [summaryResponse, challengesResponse] = await Promise.all([
+          fetchSummary(),
+          fetchChallenges()
+        ]);
         setSummary(summaryResponse.data);
+        setChallenges(challengesResponse.data.challenges || []);
         setError(null);
       } catch (err) {
         console.error('Dashboard initialization error:', err);
@@ -48,6 +58,19 @@ function Dashboard() {
 
     initializeData();
   }, []);
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return '#e8f5e9';
+      case 'failed':
+        return '#ffebee';
+      case 'active':
+        return '#fff3e0';
+      default:
+        return 'inherit';
+    }
+  };
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -187,6 +210,37 @@ function Dashboard() {
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
+            </Paper>
+          </Grid>
+          {/* Challenges Table */}
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Challenges
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Target Amount</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {challenges.map((challenge, index) => (
+                      <TableRow
+                        key={index}
+                        sx={{ backgroundColor: getStatusColor(challenge.status) }}
+                      >
+                        <TableCell>{challenge.name}</TableCell>
+                        <TableCell>${challenge.target_amount}</TableCell>
+                        <TableCell>{challenge.status}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Paper>
           </Grid>
         </Grid>

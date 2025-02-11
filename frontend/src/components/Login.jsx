@@ -10,7 +10,7 @@ function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
@@ -35,7 +35,7 @@ function Login() {
           }}
         >
           <Typography component="h1" variant="h4" gutterBottom>
-            SpendWise
+            Expin
           </Typography>
           <Typography variant="h6" color="textSecondary" gutterBottom>
             AI-Powered Financial Dashboard

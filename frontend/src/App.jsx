@@ -11,6 +11,7 @@ import Layout from './components/Layout';
 import Upload from './components/Upload';
 import Analysis from './components/Analysis';
 import { initializeAuth } from './services/api';
+import Landing from './components/Landing';
 
 const theme = createTheme({
   palette: {
@@ -46,6 +47,7 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route
             path="/*"
@@ -53,7 +55,7 @@ function App() {
               <PrivateRoute>
                 <Layout>
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/upload" element={<Upload />} />
                     <Route path="/analysis" element={<Analysis />} />
                   </Routes>

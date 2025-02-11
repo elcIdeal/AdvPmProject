@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
+  baseURL: "https://api.expin.us"
 });
 
 let tokenCallback = null;
@@ -58,4 +58,9 @@ export const fetchTransactions = (startDate, endDate) => {
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
   return api.get('/api/transactions/list', { params });
+};
+
+// Challenges endpoint
+export const fetchChallenges = () => {
+  return api.get('/api/transactions/fetchchlngs');
 };

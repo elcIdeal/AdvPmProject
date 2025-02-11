@@ -72,8 +72,8 @@ function Layout({ children }) {
         <Tooltip title={isDrawerCollapsed ? 'Dashboard' : ''} placement="right">
           <ListItem 
             button 
-            onClick={() => handleNavigation('/')} 
-            selected={location.pathname === '/'}
+            onClick={() => handleNavigation('/dashboard')} 
+            selected={location.pathname === '/dashboard'}
           >
             <ListItemIcon>
               <DashboardIcon />
@@ -129,7 +129,7 @@ function Layout({ children }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            SpendWise
+            Expin
           </Typography>
           <IconButton
             onClick={handleMenuOpen}

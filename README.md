@@ -1,6 +1,6 @@
-# SpendWise - AI-Powered Financial Dashboard
+# Expin - AI-Powered Financial Dashboard
 
-SpendWise is an AI-powered financial dashboard that transforms your bank statements into clear, actionable insights. It visualizes spending and income trends, identifies unnecessary expenses, and provides personalized recommendations for optimizing your budget.
+Expin is an AI-powered financial dashboard that transforms your bank statements into clear, actionable insights. It visualizes spending and income trends, identifies unnecessary expenses, and provides personalized recommendations for optimizing your budget.
 
 ## Features
 

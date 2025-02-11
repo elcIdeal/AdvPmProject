@@ -162,17 +162,29 @@ async def get_summary(
         pipeline = [
             {"$match": {"user_id": current_user['sub']}},
             {"$group": {
-                "_id": {"$substr": ["$date", 0, 7]},
+                "_id": {"$substr": ["$transaction_date", 0, 7]},
                 "total": {"$sum": "$amount"}
             }},
             {"$sort": {"_id": 1}}
         ]
         
+        # Get monthly aggregated data
         monthly = await request.app.mongodb['transactions'].aggregate(pipeline).to_list(None)
+        
+        # Transform the aggregated data into required format
+        monthly_summary = [
+            {
+                'total': entry['total'],
+                'month': entry['_id']
+            }
+            for entry in monthly
+        ]
+
+        print("monthly_summary", monthly_summary)
         
         return {
             "categories": categories,
-            "monthly": monthly,
+            "monthly": monthly_summary,
             "message": "Summary generated successfully"
         }
     

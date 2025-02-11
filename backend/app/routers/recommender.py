@@ -79,14 +79,15 @@ async def suggest_credit_cards(
 
     Provide the recommendations in the following format:
 
-    Suggestions:
-    1. Card Name: {{name}}, Provider: {{provider}}, Cashback: {{cashback}}, Annual Fee: {{annual_fee}}, APR: {{APR}}, Benefits: {{benefits}}
-    Reason: {{short_reasoning_for_this_recommendation}}
+    suggestions:
+    1. card_name: {{name}}, provider: {{provider}}, cashback: {{cashback}}, annual_fee: {{annual_fee}}, apr: {{apr}}, benefits: {{benefits}}, reason: {{short_reasoning_for_this_recommendation}}
 
     Your reasoning should highlight the categories where the user spends most, such as:
     - If the user spends heavily on dining, recommend a card with high dining cashback.
     - If the user has diverse spending across categories, suggest cards with broad cashback or versatile benefits.
     - If the user has high spending in a category like "Others," explain why the recommended card offers a good fit for that spending behavior.
+
+    IT IS IMPORTANT THAT YOU GIVE YOUR RESPONSE ONLY IN THIS FORMAT VALID - JSON {{suggestions:  suggestions: [card_name: {{card_name}}, provider: {{provider}}, cashback: {{cashback}}, annual_fee: {{annual_fee}}, apr: {{APR}}, benefits: {{benefits}}, reason: {{short_reasoning_for_this_recommendation}}]}} I REPEAT YOUR OUPUT IS ONLY THE JSON DEFINED BEFORE, NO OTHER NOTES OR COMMENTS.
     """
 
 
@@ -96,7 +97,9 @@ async def suggest_credit_cards(
     
     if response and response.text:
         print(response.text.strip())
-        return {"suggestions": response.text.strip()}
+        cleaned_response = response.text.replace("```json", "").replace("```", "").strip()
+        print(cleaned_response)
+        return json.loads(cleaned_response)
     else:
         raise HTTPException(status_code=500, detail="Error generating credit card suggestions.")
 
