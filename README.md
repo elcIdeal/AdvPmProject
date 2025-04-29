@@ -48,4 +48,4 @@ Expin is an AI-powered financial dashboard that transforms your bank statements 
 Detailed installation instructions will be added soon.
 
 ## License
-MIT
+MIT# AdvPmProject
