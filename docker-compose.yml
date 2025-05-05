@@ -1,22 +1,14 @@
+version: '3.8'
+
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
     ports:
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+      - "27017:27017"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=${VITE_API_URL}
-      - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
-      - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
-    env_file:
-      - .env
-    depends_on:
-      - backend
+      - mongo-data:/data/db
 
   backend:
     build:
@@ -37,3 +29,27 @@ services:
       - HOST=${BACKEND_HOST}
     env_file:
       - .env
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
+      - VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
+    env_file:
+      - .env
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:

@@ -256,13 +256,14 @@ const Landing = () => {
             transition={{ duration: 0.8 }}
           >
             <div style={{fontSize: "8rem"}}>Expin</div><br/>
-            Transform Your Finances with AI-Powered Insights
+            Transform Your Finances
           </Title>
           <Subtitle
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
+
             Track spending, save money, and make smarter financial decisions—effortlessly.
           </Subtitle>
           <motion.div

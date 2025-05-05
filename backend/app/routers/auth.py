@@ -1,60 +1,42 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from motor.motor_asyncio import AsyncIOMotorClient
-from ..config import Settings
-from pydantic import BaseModel
-from ..dependencies import get_current_user
+from fastapi import APIRouter, Request, HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+from datetime import datetime
+import bcrypt
+from ..models.user import User, RegisterUser  # ← используем этот класс
 
 router = APIRouter()
-settings = Settings()
-
-class UserProfile(BaseModel):
-    email: str
-    name: str
-    picture: str
 
 @router.post("/register")
-async def register_user(request: Request, user: UserProfile):
-    try:
-        # Check if user already exists
-        existing_user = await request.app.mongodb["users"].find_one({"email": user.email})
-        if existing_user:
-            return {"message": "User already registered"}
+async def register_user(request: Request, user: RegisterUser):
+    users_collection = request.app.mongodb["users"]
 
-        # Create new user document
-        user_doc = {
-            "email": user.email,
-            "name": user.name,
-            "picture": user.picture,
-            "created_at": datetime.utcnow()
-        }
-        
-        await request.app.mongodb["users"].insert_one(user_doc)
-        return {"message": "User registered successfully"}
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    existing_user = await users_collection.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists")
 
-@router.get("/profile")
-async def get_user_profile(request: Request, current_user = Depends(get_current_user)):
-    try:
-        user = await request.app.mongodb["users"].find_one({"email": current_user["email"]})
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        return UserProfile(
-            email=user["email"],
-            name=user["name"],
-            picture=user["picture"]
-        )
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    hashed_pw = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
+
+    new_user = {
+        "email": user.email,
+        "password": hashed_pw,
+        "name": user.name,
+        "picture": user.picture,
+        "created_at": datetime.utcnow()
+    }
+
+    await users_collection.insert_one(new_user)
+    return {"message": "User registered successfully"}
+
+
+@router.post("/login")
+async def login_user(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    users_collection = request.app.mongodb["users"]
+
+    user = await users_collection.find_one({"email": form_data.username})
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+
+    if not bcrypt.checkpw(form_data.password.encode(), user["password"].encode()):
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+
+    return {"message": "Login successful"}

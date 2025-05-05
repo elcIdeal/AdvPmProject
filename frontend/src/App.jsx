@@ -10,8 +10,9 @@ import Login from './components/Login';
 import Layout from './components/Layout';
 import Upload from './components/Upload';
 import Analysis from './components/Analysis';
-import { initializeAuth } from './services/api';
 import Landing from './components/Landing';
+import Register from './components/Register'; // ✅ Добавлено
+import { initializeAuth } from './services/api';
 
 const theme = createTheme({
   palette: {
@@ -49,6 +50,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/*"
             element={

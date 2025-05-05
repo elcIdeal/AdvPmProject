@@ -25,7 +25,14 @@ async def startup_db_client():
 async def shutdown_db_client():
     app.mongodb_client.close()
 
-# Include routers
+# ✅ Add this for authentication
+app.include_router(
+    auth.router,
+    prefix="/auth",
+    tags=["auth"]
+)
+
+# Include other routers
 app.include_router(
     transactions.router,
     prefix="/api/transactions",

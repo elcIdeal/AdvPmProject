@@ -1,57 +1,67 @@
-import React from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
-import { Box, Button, Container, Typography, Paper } from '@mui/material';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  Container, Paper, Avatar, Typography, TextField, Button, Box
+} from '@mui/material';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import axios from 'axios';
 
 function Login() {
-  const { loginWithRedirect, isAuthenticated } = useAuth0();
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  useEffect(() => {
-    if (isAuthenticated) {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
+
+    try {
+      const res = await axios.post('http://localhost:8000/auth/login', formData);
+      alert(res.data.message);
       navigate('/dashboard');
+    } catch (err) {
+      alert('Login failed');
     }
-  }, [isAuthenticated, navigate]);
+  };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h4" gutterBottom>
-            Expin
+    <Box sx={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #3f51b5 30%, #1a237e 90%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      p: 2,
+    }}>
+      <Container maxWidth="xs">
+        <Paper elevation={6} sx={{ p: 4, borderRadius: 3 }}>
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Avatar sx={{ bgcolor: 'primary.main', mx: 'auto', mb: 1 }}>
+              <LockOpenIcon />
+            </Avatar>
+            <Typography variant="h5" fontWeight="bold">Sign In</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Welcome to <strong>Expin</strong>. Please login to continue.
+            </Typography>
+          </Box>
+          <form onSubmit={handleLogin}>
+            <TextField fullWidth label="Email" type="email" value={email}
+              onChange={(e) => setEmail(e.target.value)} margin="normal" required />
+            <TextField fullWidth label="Password" type="password" value={password}
+              onChange={(e) => setPassword(e.target.value)} margin="normal" required />
+            <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
+              Sign In
+            </Button>
+          </form>
+          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+            Don't have an account? <Link to="/register">Sign Up</Link>
           </Typography>
-          <Typography variant="h6" color="textSecondary" gutterBottom>
-            AI-Powered Financial Dashboard
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={() => loginWithRedirect()}
-            sx={{ mt: 3, mb: 2 }}
-          >
-            Sign In / Sign Up
-          </Button>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 
